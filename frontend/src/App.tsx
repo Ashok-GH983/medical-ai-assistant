@@ -7,8 +7,7 @@ import {
 } from 'lucide-react';
 
 // ---- Env-driven API base (set VITE_API_URL in production) ----
-const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
-
+const API_BASE = ((import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
 interface Paper {
   pmid: string;
   title: string;
