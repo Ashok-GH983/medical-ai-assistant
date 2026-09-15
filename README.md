@@ -71,42 +71,35 @@ Deployment
 
 4. System Architecture
 
+```mermaid
+flowchart TB
+    A["React + Vite Frontend<br/>(Vercel)<br/>- SSE consumer<br/>- 6-tab results view"]
+    B["FastAPI Backend<br/>(Render)<br/>- REST + SSE endpoints<br/>- SQLAlchemy ORM"]
+    C["LangGraph Multi-Agent Pipeline<br/>(7 nodes)"]
+    D["Groq LLM API"]
+    E["PubMed E-utilities"]
+    F["PMC Open Access PDFs"]
+    G["ChromaDB + FastEmbed<br/>(ephemeral per run)"]
+    H["Redis Cache<br/>(optional)"]
+    I["SQLite / PostgreSQL<br/>(session log)"]
 
-                    ┌─────────────────────────┐
-                    │  React + Vite Frontend  │  (Vercel)
-                    │  - SSE consumer         │
-                    │  - 6-tab results view   │
-                    └───────────┬─────────────┘
-                                │ POST /api/review/stream
-                                │ (Server-Sent Events)
-                                ▼
-                    ┌─────────────────────────┐
-                    │   FastAPI Backend       │  (Render)
-                    │  - REST + SSE endpoints │
-                    │  - SQLAlchemy ORM       │
-                    └───────────┬─────────────┘
-                                │
-                                ▼
-                    ┌─────────────────────────┐
-                    │ LangGraph Multi-Agent   │
-                    │ Pipeline (7 nodes)      │
-                    └───────────┬─────────────┘
-                                │
-        ┌───────────────────────┼───────────────────────┐
-        ▼                       ▼                       ▼
-   ┌─────────┐            ┌──────────┐            ┌──────────┐
-   │ Groq    │            │ PubMed   │            │ ChromaDB │
-   │ LLM API │            │ E-utils  │            │ + Redis  │
-   └─────────┘            └──────────┘            └──────────┘
-
+    A -->|POST /api/review/stream<br/>Server-Sent Events| B
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+    C --> G
+    C --> H
+    B --> I
+```
 
 Request flow:
+
 1. Frontend POSTs { query, run_id } to /api/review/stream.
 2. FastAPI runs the LangGraph pipeline in a worker thread.
 3. Each completed node pushes a stage event into an asyncio queue.
 4. The SSE generator yields data: {...} chunks back to the browser.
 5. On completion, the final payload is emitted as type: "result".
-
 
 5. Multi-Agent Workflow
 
